@@ -1,0 +1,16 @@
+{
+    "name": "TC.EnumLibrary.Tests",
+    "rootNamespace": "TC.EnumLibrary",
+    "references": [
+        "GUID:6d16bc3391dfbdf4aad4caa79dbfbc8f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

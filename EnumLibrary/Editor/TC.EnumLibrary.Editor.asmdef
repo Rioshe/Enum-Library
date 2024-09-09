@@ -1,0 +1,18 @@
+{
+    "name": "TC.EnumLibrary.Editor",
+    "rootNamespace": "TC.EnumLibrary",
+    "references": [
+        "GUID:6d16bc3391dfbdf4aad4caa79dbfbc8f"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
