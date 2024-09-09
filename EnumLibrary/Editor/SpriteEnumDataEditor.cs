@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,6 +6,7 @@ using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace TC.EnumLibrary {
     public class SpriteEnumEditorWindow : OdinEditorWindow {
@@ -14,14 +14,15 @@ namespace TC.EnumLibrary {
         public static void ShowWindow() {
             GetWindow<SpriteEnumEditorWindow>().Show();
         }
-        
+
         [Title("Enum Settings")]
         [LabelText("Enum Name")]
         public string m_enumName = "NewSpriteEnum";
         
-        [LabelText("Folder Path")]
-        public string m_folderPath = "Assets/EnumLibrary";
-        
+        [LabelText("Root Folder Path")]
+        [FolderPath]
+        public string m_rootFolderPath = "Assets/EnumLibrary";
+
         [Title("Sprites")]
         [ListDrawerSettings(ShowFoldout = true, DefaultExpandedState = true)]
         public List<Sprite> m_selectedSprites = new();
@@ -41,11 +42,12 @@ namespace TC.EnumLibrary {
             GenerateEnum();
             GenerateStaticClass();
 
-            Debug.Log($"Enum and static class generated at: {m_folderPath}");
+            Debug.Log($"Enum and static class generated at: {m_rootFolderPath}");
         }
 
         void GenerateEnum() {
-            var enumFilePath = $"{m_folderPath}/{m_enumName}.cs";
+            string enumFolderPath = Path.Combine(m_rootFolderPath, "Enums");
+            string enumFilePath = Path.Combine(enumFolderPath, $"{m_enumName}.cs");
 
             var enumCode = new StringBuilder();
             enumCode.AppendLine("// Auto-generated enum from SpriteEnumEditor");
@@ -61,13 +63,15 @@ namespace TC.EnumLibrary {
             enumCode.AppendLine("    }");
             enumCode.AppendLine("}");
 
-            Directory.CreateDirectory(Path.GetDirectoryName(enumFilePath) ?? throw new InvalidOperationException());
+            Directory.CreateDirectory(enumFolderPath);
             File.WriteAllText(enumFilePath, enumCode.ToString());
             AssetDatabase.Refresh();
         }
 
         void GenerateStaticClass() {
-            var classFilePath = $"{m_folderPath}/{m_enumName}Library.cs";
+            string classFolderPath = Path.Combine(m_rootFolderPath, "Librarys");
+            string classFilePath = Path.Combine(classFolderPath, $"{m_enumName}Library.cs");
+
             var staticClassCode = new StringBuilder();
             staticClassCode.AppendLine("// Auto-generated static class for sprite dictionary");
             staticClassCode.AppendLine("using System.Collections.Generic;");
@@ -96,7 +100,7 @@ namespace TC.EnumLibrary {
             staticClassCode.AppendLine("    }");
             staticClassCode.AppendLine("}");
 
-            Directory.CreateDirectory(Path.GetDirectoryName(classFilePath) ?? throw new InvalidOperationException());
+            Directory.CreateDirectory(classFolderPath);
             File.WriteAllText(classFilePath, staticClassCode.ToString());
             AssetDatabase.Refresh();
         }
