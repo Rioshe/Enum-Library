@@ -17,7 +17,7 @@ namespace TC.EnumLibrary {
         [FolderPath]
         public string m_rootFolderPath = "Assets/EnumLibrary";
         
-        [LabelText("Enum Name")]
+        [LabelText("Enum Class Name")]
         [ReadOnly]
         public string m_enumName = "SpriteEnum";
 
@@ -30,7 +30,7 @@ namespace TC.EnumLibrary {
 
         [Title("Enum Settings")]
         [ShowIf("m_useCustomNames")]
-        [LabelText("Custom Enum Name")]
+        [LabelText("Custom Enum Class Name")]
         public string m_customEnumName = "CustomSpriteEnum";
 
         [ShowIf("m_useCustomNames")]
