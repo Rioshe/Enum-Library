@@ -45,19 +45,19 @@ namespace TC.EnumLibrary {
         [Button(ButtonSizes.Large)]
         public void GenerateEnumAndStaticClass() {
             if (string.IsNullOrEmpty(m_enumName)) {
-                Debug.LogWarning("Enum name is empty. Please provide a valid name.");
+                SystemLogging.LogWarning("Enum name is empty. Please provide a valid name.");
                 return;
             }
 
             if (m_selectedSprites.Count == 0) {
-                Debug.LogWarning("No sprites selected. Please add sprites.");
+                SystemLogging.LogWarning("No sprites selected. Please add sprites.");
                 return;
             }
 
             GenerateEnum();
             GenerateStaticClass();
 
-            Debug.Log($"Enum and static class generated at: {m_rootFolderPath}");
+            SystemLogging.Log($"Enum and static class generated at: {m_rootFolderPath}");
         }
 
         void GenerateEnum() {
@@ -65,7 +65,7 @@ namespace TC.EnumLibrary {
             string enumFilePath = Path.Combine(enumFolderPath, $"{(m_useCustomNames ? m_customEnumName : m_enumName)}.cs");
 
             if (!LibraryHelpers.GenerateFolderStructureAt(enumFolderPath)) {
-                Debug.LogError("Failed to create folder structure for enums.");
+                SystemLogging.LogError("Failed to create folder structure for enums.");
                 return;
             }
 
