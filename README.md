@@ -79,9 +79,6 @@ To get up and running with **Assets Enum Library Editor**, follow these steps:
 
 Contributions are welcome! Check out the steps below to contribute:
 
-![Forks](https://img.shields.io/github/forks/Ddemon26/Enum-Library?style=social)
-![Stars](https://img.shields.io/github/stars/Ddemon26/Enum-Library?style=social)
-
 1. Fork the repository.
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
