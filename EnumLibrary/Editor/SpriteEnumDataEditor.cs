@@ -1,131 +1,116 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
 namespace TC.EnumLibrary {
-    public class SpriteEnumEditorWindow : OdinEditorWindow {
-        [MenuItem("Tools/Sprite Enum Library Editor")]
-        public static void ShowWindow() {
-            GetWindow<SpriteEnumEditorWindow>().Show();
-        }
-        [LabelText("Root Folder Path")]
-        [FolderPath]
-        public string m_rootFolderPath = "Assets/EnumLibrary";
-        
-        [LabelText("Enum Class Name")]
-        [ReadOnly]
-        public string m_enumName = "SpriteEnum";
+    public class EnumGenerator : OdinEditorWindow {
+        [MenuItem("Tools/Enum Generator")]
+        static void OpenWindow() => GetWindow<EnumGenerator>().Show();
 
-        [LabelText("Namespace")]
-        [ReadOnly]
-        public string m_namespace = "TC.EnumLibrary";
+        [Title("Enum Generator")]
+        [InfoBox("Enter the names for the enum values and click 'Generate Enum'")]
+        public List<string> m_enumNames = new();
+        [ShowInInspector] public Dictionary<Enum, float> Prices;
+        public Enum ExistingEnum;
+        const float DEFAULT_PRICE = 10.00f;
 
-        [Tooltip("Allows you to customize the enum and namespace names for your generated Files. For advanced users.")]
-        public bool m_useCustomNames = false;
-
-        [Title("Enum Settings")]
-        [ShowIf("m_useCustomNames")]
-        [LabelText("Custom Enum Class Name")]
-        public string m_customEnumName = "CustomSpriteEnum";
-
-        [ShowIf("m_useCustomNames")]
-        [LabelText("Custom Namespace")]
-        public string m_customNamespace = "Custom.Namespace";
-
-
-        [Title("Sprites")]
-        [ListDrawerSettings(ShowFoldout = true, DefaultExpandedState = true)]
-        public List<Sprite> m_selectedSprites = new();
-
-        [Button(ButtonSizes.Large)]
-        public void GenerateEnumAndStaticClass() {
-            if (string.IsNullOrEmpty(m_enumName)) {
-                SystemLogging.LogWarning("Enum name is empty. Please provide a valid name.");
+        [Button("Populate Prices")]
+        void PopulatePrices() {
+            if (ExistingEnum == null) {
+                Debug.LogWarning("An existing enum must be selected to populate the prices.");
                 return;
             }
 
-            if (m_selectedSprites.Count == 0) {
-                SystemLogging.LogWarning("No sprites selected. Please add sprites.");
-                return;
+            Prices = new Dictionary<Enum, float>();
+            foreach (Enum value in Enum.GetValues(ExistingEnum.GetType())) {
+                Prices[value] = DEFAULT_PRICE;
             }
 
-            GenerateEnum();
-            GenerateStaticClass();
-
-            SystemLogging.Log($"Enum and static class generated at: {m_rootFolderPath}");
+            Debug.Log("Prices populated for the selected enum.");
         }
 
+        [Button("Generate Enum")]
         void GenerateEnum() {
-            string enumFolderPath = Path.Combine(m_rootFolderPath, "Enums");
-            string enumFilePath = Path.Combine(enumFolderPath, $"{(m_useCustomNames ? m_customEnumName : m_enumName)}.cs");
+            // Filter out null, empty, or whitespace strings and convert to alphanumeric
+            List<string> filteredEnumNames = m_enumNames
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Select(value => value.ConvertToAlphanumeric())
+                .ToList();
 
-            if (!LibraryHelpers.GenerateFolderStructureAt(enumFolderPath)) {
-                SystemLogging.LogError("Failed to create folder structure for enums.");
+            if (filteredEnumNames.Count == 0) {
+                Debug.LogWarning("Enum names list is empty or contains only invalid entries.");
                 return;
             }
 
-            var enumCode = new StringBuilder();
-            enumCode.AppendLine("// Auto-generated enum from SpriteEnumEditor");
-            enumCode.AppendLine($"namespace {(m_useCustomNames ? m_customNamespace : m_namespace)} {{");
-            enumCode.AppendLine("    public enum " + (m_useCustomNames ? m_customEnumName : m_enumName));
-            enumCode.AppendLine("    {");
-            enumCode.AppendLine("        None,");
+            const string enumName = "GeneratedEnum";
+            string filePath = Path.Combine(Application.dataPath, "GeneratedEnum.cs");
 
-            foreach (string sanitizedSpriteName in m_selectedSprites.Select(sprite => sprite.name.ConvertToAlphanumeric())) {
-                enumCode.AppendLine($"        {sanitizedSpriteName},");
+            using (var writer = new StreamWriter(filePath)) {
+                writer.WriteLine("public enum " + enumName);
+                writer.WriteLine("{");
+
+                for (var i = 0; i < filteredEnumNames.Count; i++) {
+                    writer.WriteLine("    " + filteredEnumNames[i] + (i < filteredEnumNames.Count - 1 ? "," : ""));
+                }
+
+                writer.WriteLine("}");
             }
 
-            enumCode.AppendLine("    }");
-            enumCode.AppendLine("}");
-
-            File.WriteAllText(enumFilePath, enumCode.ToString());
             AssetDatabase.Refresh();
+            Debug.Log("Enum generated at: " + filePath);
         }
 
-        void GenerateStaticClass() {
-            string classFolderPath = Path.Combine(m_rootFolderPath, "Librarys");
-            string classFilePath = Path.Combine(classFolderPath, $"{(m_useCustomNames ? m_customEnumName : m_enumName)}Library.cs");
+        [Button("Generate ScriptableObject")]
+void GenerateScriptableObject() {
+    if (ExistingEnum == null) {
+        Debug.LogWarning("An existing enum must be selected to generate a ScriptableObject.");
+        return;
+    }
 
-            if (!LibraryHelpers.GenerateFolderStructureAt(classFolderPath)) {
-                Debug.LogError("Failed to create folder structure for static classes.");
-                return;
-            }
+    List<string> filteredEnumNames = Enum.GetNames(ExistingEnum.GetType()).ToList();
+    string enumTypeName = ExistingEnum.GetType().Name;
 
-            var staticClassCode = new StringBuilder();
-            staticClassCode.AppendLine("// Auto-generated static class for sprite dictionary");
-            staticClassCode.AppendLine("using System.Collections.Generic;");
-            staticClassCode.AppendLine("using UnityEngine;");
-            staticClassCode.AppendLine($"namespace {(m_useCustomNames ? m_customNamespace : m_namespace)} {{");
-            staticClassCode.AppendLine($"    public static class {(m_useCustomNames ? m_customEnumName : m_enumName)}Library");
-            staticClassCode.AppendLine("    {");
-            staticClassCode.AppendLine($"        public static readonly Dictionary<{(m_useCustomNames ? m_customEnumName : m_enumName)}, Sprite> Sprites = new() {{");
+    if (filteredEnumNames.Count == 0) {
+        Debug.LogWarning("Enum names list is empty or contains only invalid entries.");
+        return;
+    }
 
-            foreach (var sprite in m_selectedSprites) {
-                string sanitizedSpriteName = sprite.name.ConvertToAlphanumeric();
-                staticClassCode.AppendLine($"            {{ {(m_useCustomNames ? m_customEnumName : m_enumName)}.{sanitizedSpriteName}, Resources.Load<Sprite>(\"Sprites/{sprite.name}\") }},");
-            }
+    const string className = "DrugTypePrices";
+    string filePath = Path.Combine(Application.dataPath, className + ".cs");
 
-            staticClassCode.AppendLine("        };");
+    using (var writer = new StreamWriter(filePath)) {
+        writer.WriteLine("using System.Collections.Generic;");
+        writer.WriteLine("using UnityEngine;");
+        writer.WriteLine();
+        writer.WriteLine("namespace TC.EnumLibrary {");
+        writer.WriteLine("    public class " + className + " : ScriptableObject {");
+        writer.WriteLine("        public float m_defaultPrice = 10.00f;");
+        writer.WriteLine("        Dictionary<" + enumTypeName + ", float> m_prices;");
+        writer.WriteLine();
+        writer.WriteLine("        public void Init() {");
+        writer.WriteLine("            m_prices = new Dictionary<" + enumTypeName + ", float> {");
 
-            // Add GetSprite method
-            staticClassCode.AppendLine($"        public static Sprite GetSprite({(m_useCustomNames ? m_customEnumName : m_enumName)} enumValue) {{");
-            staticClassCode.AppendLine("            if (Sprites.TryGetValue(enumValue, out var sprite)) {");
-            staticClassCode.AppendLine("                return sprite;");
-            staticClassCode.AppendLine("            }");
-            staticClassCode.AppendLine("            Debug.LogWarning($\"Sprite for {enumValue} not found.\");");
-            staticClassCode.AppendLine("            return null;");
-            staticClassCode.AppendLine("        }");
-
-            staticClassCode.AppendLine("    }");
-            staticClassCode.AppendLine("}");
-
-            File.WriteAllText(classFilePath, staticClassCode.ToString());
-            AssetDatabase.Refresh();
+        for (var i = 0; i < filteredEnumNames.Count; i++) {
+            string enumValue = filteredEnumNames[i];
+            float price = Prices.ContainsKey((Enum)Enum.Parse(ExistingEnum.GetType(), enumValue)) ? Prices[(Enum)Enum.Parse(ExistingEnum.GetType(), enumValue)] : DEFAULT_PRICE;
+            writer.WriteLine("                { " + enumTypeName + "." + enumValue + ", " + price + " }" + (i < filteredEnumNames.Count - 1 ? "," : ""));
         }
+
+        writer.WriteLine("            };");
+        writer.WriteLine("        }");
+        writer.WriteLine();
+        writer.WriteLine("        public float GetPrice(" + enumTypeName + " drugType) => m_prices[drugType];");
+        writer.WriteLine("    }");
+        writer.WriteLine("}");
+    }
+
+    AssetDatabase.Refresh();
+    Debug.Log("ScriptableObject generated at: " + filePath);
+}
     }
 }
