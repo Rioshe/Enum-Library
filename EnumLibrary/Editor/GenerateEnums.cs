@@ -1,31 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
 
 namespace TC.EnumLibrary {
-    [Serializable]
-    public class GenerateEnums {
-        [InfoBox("Enter the names for the enum values and click 'Generate Enum'")]
-        public List<string> m_enumNames = new();
-        
-        public void GenerateEnum() {
-            // Filter out null, empty, or whitespace strings, names starting with a number, and convert to alphanumeric
-            List<string> filteredEnumNames = m_enumNames
-                .Where(value => !string.IsNullOrWhiteSpace(value) && !char.IsDigit(value[0]))
+    public static class GenerateEnums {
+        public static void GenEnum(string path, string enumName, List<string> enumNames) {
+            List<string> filteredEnumNames = enumNames
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Select(value => char.IsDigit(value[0]) ? value[1..] : value)
                 .Select(value => value.ConvertToAlphanumeric())
                 .ToList();
 
             if (filteredEnumNames.Count == 0) {
-                Debug.LogWarning("Enum names list is empty or contains only invalid entries.");
+                SystemLogging.LogWarning("Enum names list is empty or contains only invalid entries.");
+                return;
+            }
+            
+            string directoryPath = Path.GetDirectoryName(path);
+            if (!LibraryHelpers.GenerateFolderStructureAt(directoryPath)) {
+                SystemLogging.LogWarning("Failed to generate folder structure at: " + directoryPath);
                 return;
             }
 
-            const string enumName = "GeneratedEnum";
-            string filePath = Path.Combine(Application.dataPath, "GeneratedEnum.cs");
+            string filePath = Path.Combine(path, enumName + ".cs");
 
             using (var writer = new StreamWriter(filePath)) {
                 writer.WriteLine("public enum " + enumName);
@@ -56,7 +55,7 @@ namespace TC.EnumLibrary {
                     writer.WriteLine("    " + enumValues[i] + (i < enumValues.Count - 1 ? "," : ""));
                 }
             }
-            
+
             using (var writer = new StreamWriter(filePath, true)) {
                 writer.WriteLine("}");
             }

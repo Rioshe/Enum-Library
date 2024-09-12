@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace TC.EnumLibrary {
     public static class ClassParser {
-        public static void GenScriptableObject(Type valueType, Enum existingEnum, string className, bool isNumeric = false) {
+        public static void GenScriptableObject(Type valueType, Enum existingEnum, string className, string filePath, bool isNumeric = false) {
             if (existingEnum == null) {
                 SystemLogging.LogWarning("An existing enum must be selected to generate a ScriptableObject.");
                 return;
@@ -21,8 +21,12 @@ namespace TC.EnumLibrary {
                 return;
             }
 
-            string filePath = Path.Combine(Application.dataPath, className + ".cs");
             string valueTypeName = isNumeric ? GetNumericTypeName(valueType) : valueType.Name;
+            string directoryPath = Path.GetDirectoryName(filePath);
+
+            if (!Directory.Exists(directoryPath)) {
+                LibraryHelpers.GenerateFolderStructureAt(directoryPath);
+            }
 
             using (var writer = new StreamWriter(filePath)) {
                 writer.WriteLine("using System;");
@@ -36,6 +40,7 @@ namespace TC.EnumLibrary {
                 if (!isNumeric) {
                     writer.WriteLine("        [SerializeField] " + valueTypeName + " m_default;");
                 }
+
                 writer.WriteLine("        [ShowInInspector] Dictionary<" + enumTypeName + ", " + valueTypeName + "> m_items;");
                 writer.WriteLine();
                 writer.WriteLine("        public void Awake() => Init();");
@@ -57,8 +62,6 @@ namespace TC.EnumLibrary {
             EditorUtility.FocusProjectWindow();
             Debug.Log("ScriptableObject generated at: " + filePath);
         }
-
-        static string GetDefaultValue(Type valueType, bool isNumeric) => isNumeric ? "0" : "default";
 
         static string GetNumericTypeName(Type type) {
             if (type == typeof(int)) return "int";

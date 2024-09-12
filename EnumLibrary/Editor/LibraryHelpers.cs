@@ -9,6 +9,28 @@ using Object = UnityEngine.Object;
 namespace TC.EnumLibrary {
     public static class LibraryHelpers {
         /// <summary>
+        /// Checks if the given type is a numeric type.
+        /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <returns>True if the type is numeric; otherwise, false.</returns>
+        public static bool IsNumericType(Type type) {
+            return type == typeof(int) || type == typeof(float) || type == typeof(double) ||
+                   type == typeof(decimal) || type == typeof(long) || type == typeof(short) ||
+                   type == typeof(byte);
+        }
+
+        /// <summary>
+        /// Checks if a class with the specified name exists in the current AppDomain.
+        /// </summary>
+        /// <param name="className">The name of the class to check.</param>
+        /// <returns>True if the class exists; otherwise, false.</returns>
+        public static bool ClassExists(string className) {
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(assembly => assembly.GetTypes())
+                .Any(type => type.Name == className);
+        }
+        
+        /*/// <summary>
         /// Creates an asset at the specified path, creating any necessary folders along the way.
         /// </summary>
         /// <param name="asset"></param>
@@ -26,7 +48,7 @@ namespace TC.EnumLibrary {
             AssetDatabase.CreateAsset(asset, path);
             return true;
 
-        }
+        }*/
 
         /// <summary>
         /// Generates the folder structure to a specified path if it doesn't already exist. 
@@ -52,10 +74,10 @@ namespace TC.EnumLibrary {
                     if (ask) {
                         createFolder = EditorUtility
                             .DisplayDialog("Path does not exist!",
-                                "The folder "
-                                + "\""
-                                + newPath
-                                + "\" does not exist! Would you like to create this folder?", "Yes", "No");
+                                           "The folder "
+                                           + "\""
+                                           + newPath
+                                           + "\" does not exist! Would you like to create this folder?", "Yes", "No");
                     }
 
                     if (createFolder) {
@@ -74,7 +96,7 @@ namespace TC.EnumLibrary {
             return true;
         }
 
-        public static List<T> ImportAssetsOrFoldersAtPath<T>(string filePath) where T : Object {
+        /*public static List<T> ImportAssetsOrFoldersAtPath<T>(string filePath) where T : Object {
             var asset = AssetDatabase.LoadAssetAtPath<T>(filePath);
             if (!AssetDatabase.IsValidFolder(filePath)) {
                 if (asset) {
@@ -93,9 +115,9 @@ namespace TC.EnumLibrary {
             }
 
             return new List<T>();
-        }
-        
-        /// <summary>
+        }*/
+
+        /*/// <summary>
         /// Returns an enum type given it's name as a string
         /// https://stackoverflow.com/questions/25404237/how-to-get-enum-type-by-specifying-its-name-in-string
         /// </summary>
@@ -106,56 +128,20 @@ namespace TC.EnumLibrary {
             Assembly[] assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
             return assemblies
                 .Select(t =>
-                    t.GetType(enumName))
+                            t.GetType(enumName))
                 .Where(type => type != null)
                 .FirstOrDefault(type => type.IsEnum);
-        }
+        }*/
 
-        /// <summary>
-        /// Converts the input string to an alphanumeric string, optionally allowing periods.
-        /// </summary>
-        /// <param name="input">The input string to be converted.</param>
-        /// <param name="allowPeriods">A boolean flag indicating whether periods should be allowed in the output string.</param>
-        /// <returns>
-        /// A new string containing only alphanumeric characters, underscores, and optionally periods.
-        /// If the input string is null or empty, an empty string is returned.
-        /// </returns>
-        public static string ConvertToAlphanumeric(this string input, bool allowPeriods = false) {
-            if (string.IsNullOrEmpty(input))
-                return string.Empty;
-
-            List<char> filteredChars = new List<char>();
-            int lastValidIndex = -1;
-
-            // Iterate over the input string, filtering and determining valid start/end indices
-            foreach (char character in input
-                         .Where(character => char
-                             .IsLetterOrDigit(character) || character == '_' || (allowPeriods && character == '.'))
-                         .Where(character => filteredChars.Count != 0 || (!char.IsDigit(character) && character != '.'))) {
-
-                filteredChars.Add(character);
-                lastValidIndex = filteredChars.Count - 1; // Update lastValidIndex for valid characters
-            }
-
-            // Remove trailing periods
-            while (lastValidIndex >= 0 && filteredChars[lastValidIndex] == '.') {
-                lastValidIndex--;
-            }
-
-            // Return the filtered string
-            return lastValidIndex >= 0
-                ? new string(filteredChars.ToArray(), 0, lastValidIndex + 1) : string.Empty;
-        }
-        
-        /// <summary>
-        /// Returns true if this AudioFile houses a .WAV
-        /// </summary>
-        /// <returns></returns>
-        public static bool IsWavFile(this AudioClip audioClip) {
-            string filePath = AssetDatabase.GetAssetPath(audioClip);
-            string trueFilePath = Application.dataPath.Remove(Application.dataPath.LastIndexOf("/", StringComparison.Ordinal) + 1) + filePath;
-            string fileExtension = trueFilePath[^4..];
-            return fileExtension == ".wav";
-        }
+        // /// <summary>
+        // /// Returns true if this AudioFile houses a .WAV
+        // /// </summary>
+        // /// <returns></returns>
+        // public static bool IsWavFile(this AudioClip audioClip) {
+        //     string filePath = AssetDatabase.GetAssetPath(audioClip);
+        //     string trueFilePath = Application.dataPath.Remove(Application.dataPath.LastIndexOf("/", StringComparison.Ordinal) + 1) + filePath;
+        //     string fileExtension = trueFilePath[^4..];
+        //     return fileExtension == ".wav";
+        // }
     }
 }
