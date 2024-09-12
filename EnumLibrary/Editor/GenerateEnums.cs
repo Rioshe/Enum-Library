@@ -5,15 +5,17 @@ using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
+
 namespace TC.EnumLibrary {
     [Serializable]
     public class GenerateEnums {
         [InfoBox("Enter the names for the enum values and click 'Generate Enum'")]
         public List<string> m_enumNames = new();
+        
         public void GenerateEnum() {
-            // Filter out null, empty, or whitespace strings and convert to alphanumeric
+            // Filter out null, empty, or whitespace strings, names starting with a number, and convert to alphanumeric
             List<string> filteredEnumNames = m_enumNames
-                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Where(value => !string.IsNullOrWhiteSpace(value) && !char.IsDigit(value[0]))
                 .Select(value => value.ConvertToAlphanumeric())
                 .ToList();
 
