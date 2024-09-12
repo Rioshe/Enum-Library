@@ -9,6 +9,22 @@ using Object = UnityEngine.Object;
 namespace TC.EnumLibrary {
     public static class LibraryHelpers {
         /// <summary>
+        /// Validates the given directory path.
+        /// </summary>
+        /// <param name="directoryPath">The directory path to validate.</param>
+        /// <returns>
+        /// True if the directory path is not null or empty; otherwise, false.
+        /// </returns>
+        /// <remarks>
+        /// Logs a warning message if the directory path is null or invalid.
+        /// </remarks>
+        public static bool ValidateDirectoryPath(string directoryPath) {
+            if (!string.IsNullOrEmpty(directoryPath)) return true;
+            SystemLogging.LogWarning("Directory path is null or invalid.");
+            return false;
+        }
+        
+        /// <summary>
         /// Checks if the given type is a numeric type.
         /// </summary>
         /// <param name="type">The type to check.</param>

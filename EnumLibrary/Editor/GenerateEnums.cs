@@ -17,7 +17,7 @@ namespace TC.EnumLibrary {
                 SystemLogging.LogWarning("Enum names list is empty or contains only invalid entries.");
                 return;
             }
-            
+
             string directoryPath = Path.GetDirectoryName(path);
             if (!LibraryHelpers.GenerateFolderStructureAt(directoryPath)) {
                 SystemLogging.LogWarning("Failed to generate folder structure at: " + directoryPath);
@@ -62,7 +62,7 @@ namespace TC.EnumLibrary {
             }
 
             AssetDatabase.Refresh();
-            Debug.Log("Enum generated at: " + filePath);
+            SystemLogging.Log("Enum generated at: " + filePath);
         }
     }
 }

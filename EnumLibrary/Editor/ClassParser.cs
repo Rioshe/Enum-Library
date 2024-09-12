@@ -3,77 +3,104 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
-using UnityEngine;
 
 namespace TC.EnumLibrary {
     public static class ClassParser {
-        public static void GenScriptableObject(Type valueType, Enum existingEnum, string className, string path, bool isNumeric = false) {
-            if (existingEnum == null) {
-                SystemLogging.LogWarning("An existing enum must be selected to generate a ScriptableObject.");
-                return;
-            }
+        public static void GenScriptableObject(Type valueType, Enum targetEnum, string className, string namespaceName, string filePath, bool isNumeric = false) {
+            if (!ValidateEnum(targetEnum)) return;
 
-            List<string> filteredEnumNames = Enum.GetNames(existingEnum.GetType()).ToList();
-            string enumTypeName = existingEnum.GetType().Name;
+            List<string> enumNames = Enum.GetNames(targetEnum.GetType()).ToList();
+            if (!ValidateEnumNames(enumNames)) return;
 
-            if (filteredEnumNames.Count == 0) {
-                SystemLogging.LogWarning("Enum names list is empty or contains only invalid entries.");
-                return;
-            }
+            string valueTypeName = GetValueTypeName(valueType, isNumeric);
+            string enumTypeName = targetEnum.GetType().Name;
 
-            string valueTypeName = isNumeric ? GetNumericTypeName(valueType) : valueType.Name;
-            
-            string directoryPath = Path.GetDirectoryName(path);
+            string directoryPath = Path.GetDirectoryName(filePath);
+            if (!LibraryHelpers.ValidateDirectoryPath(directoryPath)) return;
+
             if (!LibraryHelpers.GenerateFolderStructureAt(directoryPath)) {
-                SystemLogging.LogWarning("Failed to generate folder structure at: " + directoryPath);
+                SystemLogging.LogWarning($"Failed to generate folder structure at: {directoryPath}");
                 return;
             }
+
             if (directoryPath == null) return;
-            string filePath = Path.Combine(directoryPath, className + ".cs");
+            string scriptFilePath = Path.Combine(directoryPath, $"{className}.cs");
 
-            using (var writer = new StreamWriter(filePath)) {
-                writer.WriteLine("using System;");
-                writer.WriteLine("using UnityEngine;");
-                writer.WriteLine("using System.Collections.Generic;");
-                writer.WriteLine("using Sirenix.OdinInspector;");
-                writer.WriteLine();
-                writer.WriteLine("namespace TC.EnumLibrary {");
-                writer.WriteLine("    [CreateAssetMenu(fileName = \"" + className + "\", menuName = \"AssetLibrary/" + className + "\")]");
-                writer.WriteLine("    public class " + className + " : ScriptableObject {");
-                if (!isNumeric) {
-                    writer.WriteLine("        [SerializeField] " + valueTypeName + " m_default;");
-                }
+            GenerateScriptFile(scriptFilePath, className, namespaceName, valueTypeName, enumTypeName, isNumeric);
 
-                writer.WriteLine("        [ShowInInspector] Dictionary<" + enumTypeName + ", " + valueTypeName + "> m_items = new();");
-                writer.WriteLine();
-                writer.WriteLine("        public void Awake() => Init();");
-                writer.WriteLine("        void Init() {");
-                writer.WriteLine("            m_items = new Dictionary<" + enumTypeName + ", " + valueTypeName + ">();");
-                writer.WriteLine("            foreach (" + enumTypeName + " value in Enum.GetValues(typeof(" + enumTypeName + "))) {");
-                writer.WriteLine("                m_items.Add(value, " + (isNumeric ? "0" : "m_default") + ");");
-                writer.WriteLine("            }");
-                writer.WriteLine("        }");
-                writer.WriteLine();
-                writer.WriteLine("        [Button(\"Reset\")]");
-                writer.WriteLine("        public void Reset() => Init();");
-                writer.WriteLine("        public " + valueTypeName + " GetItem(" + enumTypeName + " item) => m_items[item];");
-                writer.WriteLine("    }");
-                writer.WriteLine("}");
+            RefreshAssets(filePath);
+        }
+
+        static bool ValidateEnum(Enum targetEnum) {
+            if (targetEnum != null) return true;
+            SystemLogging.LogWarning("An existing enum must be provided to generate a ScriptableObject.");
+            return false;
+        }
+
+        static bool ValidateEnumNames(List<string> enumNames) {
+            if (enumNames.Any()) return true;
+            SystemLogging.LogWarning("Enum names list is empty or contains invalid entries.");
+            return false;
+        }
+
+        static string GetValueTypeName(Type valueType, bool isNumeric) {
+            return isNumeric ? GetNumericTypeName(valueType) : valueType.Name;
+        }
+
+        static void GenerateScriptFile(string scriptFilePath, string className, string namespaceName, string valueTypeName, string enumTypeName, bool isNumeric) {
+            using var writer = new StreamWriter(scriptFilePath);
+            writer.WriteLine("using System;");
+            writer.WriteLine("using UnityEngine;");
+            writer.WriteLine("using System.Collections.Generic;");
+            writer.WriteLine("using Sirenix.OdinInspector;");
+            writer.WriteLine("using UnityEngine.Video;");
+            writer.WriteLine();
+            writer.WriteLine($"namespace {namespaceName} {{");
+            writer.WriteLine($"    [CreateAssetMenu(fileName = \"{className}\", menuName = \"AssetLibrary/{className}\")]");
+            writer.WriteLine($"    public class {className} : ScriptableObject {{");
+
+            if (!isNumeric) {
+                writer.WriteLine($"        [SerializeField] private {valueTypeName} defaultValue;");
             }
 
+            writer.WriteLine($"        [ShowInInspector] private Dictionary<{enumTypeName}, {valueTypeName}> items = new();");
+            writer.WriteLine();
+            writer.WriteLine("        private void Awake() => Initialize();");
+            writer.WriteLine();
+            writer.WriteLine("        private void Initialize()");
+            writer.WriteLine("        {");
+            writer.WriteLine($"            items = new Dictionary<{enumTypeName}, {valueTypeName}>();");
+            writer.WriteLine($"            foreach ({enumTypeName} enumValue in Enum.GetValues(typeof({enumTypeName})))");
+            writer.WriteLine("            {");
+            writer.WriteLine($"                items.Add(enumValue, {(isNumeric ? "0" : "defaultValue")});");
+            writer.WriteLine("            }");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine("        [Button(\"Reset\")]");
+            writer.WriteLine("        public void Reset() => Initialize();");
+            writer.WriteLine();
+            writer.WriteLine($"        public {valueTypeName} GetItem({enumTypeName} enumValue) => items[enumValue];");
+            writer.WriteLine("    }");
+            writer.WriteLine("}");
+        }
+
+        static void RefreshAssets(string filePath) {
             AssetDatabase.Refresh();
             EditorUtility.FocusProjectWindow();
-            Debug.Log("ScriptableObject generated at: " + path);
+            SystemLogging.Log($"ScriptableObject generated at: {filePath}");
         }
 
         static string GetNumericTypeName(Type type) {
-            if (type == typeof(int)) return "int";
-            if (type == typeof(float)) return "float";
-            if (type == typeof(double)) return "double";
-            if (type == typeof(decimal)) return "decimal";
-            if (type == typeof(long)) return "long";
-            if (type == typeof(short)) return "short";
-            return type == typeof(byte) ? "byte" : "float"; // Fallback, though ideally this should never be reached
+            return type switch {
+                not null when type == typeof(int) => "int",
+                not null when type == typeof(float) => "float",
+                not null when type == typeof(double) => "double",
+                not null when type == typeof(decimal) => "decimal",
+                not null when type == typeof(long) => "long",
+                not null when type == typeof(short) => "short",
+                not null when type == typeof(byte) => "byte",
+                _ => "float", // Default fallback
+            };
         }
     }
 }
