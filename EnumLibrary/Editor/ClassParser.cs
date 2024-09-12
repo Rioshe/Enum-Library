@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace TC.EnumLibrary {
     public static class ClassParser {
-        public static void GenScriptableObject(Type valueType, Enum existingEnum, string className, string filePath, bool isNumeric = false) {
+        public static void GenScriptableObject(Type valueType, Enum existingEnum, string className, string path, bool isNumeric = false) {
             if (existingEnum == null) {
                 SystemLogging.LogWarning("An existing enum must be selected to generate a ScriptableObject.");
                 return;
@@ -22,11 +22,14 @@ namespace TC.EnumLibrary {
             }
 
             string valueTypeName = isNumeric ? GetNumericTypeName(valueType) : valueType.Name;
-            string directoryPath = Path.GetDirectoryName(filePath);
-
-            if (!Directory.Exists(directoryPath)) {
-                LibraryHelpers.GenerateFolderStructureAt(directoryPath);
+            
+            string directoryPath = Path.GetDirectoryName(path);
+            if (!LibraryHelpers.GenerateFolderStructureAt(directoryPath)) {
+                SystemLogging.LogWarning("Failed to generate folder structure at: " + directoryPath);
+                return;
             }
+            if (directoryPath == null) return;
+            string filePath = Path.Combine(directoryPath, className + ".cs");
 
             using (var writer = new StreamWriter(filePath)) {
                 writer.WriteLine("using System;");
@@ -41,7 +44,7 @@ namespace TC.EnumLibrary {
                     writer.WriteLine("        [SerializeField] " + valueTypeName + " m_default;");
                 }
 
-                writer.WriteLine("        [ShowInInspector] Dictionary<" + enumTypeName + ", " + valueTypeName + "> m_items;");
+                writer.WriteLine("        [ShowInInspector] Dictionary<" + enumTypeName + ", " + valueTypeName + "> m_items = new();");
                 writer.WriteLine();
                 writer.WriteLine("        public void Awake() => Init();");
                 writer.WriteLine("        void Init() {");
@@ -60,7 +63,7 @@ namespace TC.EnumLibrary {
 
             AssetDatabase.Refresh();
             EditorUtility.FocusProjectWindow();
-            Debug.Log("ScriptableObject generated at: " + filePath);
+            Debug.Log("ScriptableObject generated at: " + path);
         }
 
         static string GetNumericTypeName(Type type) {

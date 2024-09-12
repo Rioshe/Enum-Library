@@ -24,7 +24,8 @@ namespace TC.EnumLibrary {
                 return;
             }
 
-            string filePath = Path.Combine(path, enumName + ".cs");
+            if (directoryPath == null) return;
+            string filePath = Path.Combine(directoryPath, enumName + ".cs");
 
             using (var writer = new StreamWriter(filePath)) {
                 writer.WriteLine("public enum " + enumName);

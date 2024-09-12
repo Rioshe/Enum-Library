@@ -20,6 +20,7 @@ namespace TC.EnumLibrary {
         [InfoBox("Enter the names for the enum values and click 'Generate Enum'")]
         public List<string> m_enumNames = new();
         [FoldoutGroup("Generate Enum")]
+        [Required]
         public string m_enumClassName = "EnumLibrary";
         [FoldoutGroup("Generate Enum")]
         [Button("Generate Enum")]
@@ -37,10 +38,11 @@ namespace TC.EnumLibrary {
         #region ScriptableObjectGeneration
         [Title("Generate ScriptableObject")]
         [FoldoutGroup("Generate ScriptableObject")]
-        [InfoBox("This will generate a ScriptableObject with a dictionary of the selected type.")]
+        [InfoBox("Select an existing enum and the type of value you want to associate with it.")]
+        [Required]
         public Enum ExistingEnum;
         [FoldoutGroup("Generate ScriptableObject")]
-        [InfoBox("This will generate a ScriptableObject with a dictionary of the selected type.")]
+        [InfoBox("Enter the name for the ScriptableObject class and click 'GenerateByType'")]
         public string m_className = "EnumLibrary";
         string SafeClassName => m_className.ConvertToAlphanumeric();
         enum ValueType { Float, Int, Sprite, TextAsset, AudioClip, Color }
@@ -48,8 +50,8 @@ namespace TC.EnumLibrary {
         [InfoBox("This will generate a ScriptableObject with a dictionary of the selected type.")]
         [SerializeField] ValueType m_valueType;
 
-        [Button("Populate List")]
-        void PopulateByType() {
+        [Button("GenerateByType")]
+        void GenerateByType() {
             Dictionary<ValueType, Type> typeMap = new() {
                 { ValueType.Float, typeof(float) },
                 { ValueType.Int, typeof(int) },
