@@ -9,7 +9,7 @@ namespace TC.EnumLibrary {
     public static class ClassParser {
         public static void GenScriptableObject(Type valueType, Enum existingEnum, string className, bool isNumeric = false) {
             if (existingEnum == null) {
-                Debug.LogWarning("An existing enum must be selected to generate a ScriptableObject.");
+                SystemLogging.LogWarning("An existing enum must be selected to generate a ScriptableObject.");
                 return;
             }
 
@@ -17,7 +17,7 @@ namespace TC.EnumLibrary {
             string enumTypeName = existingEnum.GetType().Name;
 
             if (filteredEnumNames.Count == 0) {
-                Debug.LogWarning("Enum names list is empty or contains only invalid entries.");
+                SystemLogging.LogWarning("Enum names list is empty or contains only invalid entries.");
                 return;
             }
 

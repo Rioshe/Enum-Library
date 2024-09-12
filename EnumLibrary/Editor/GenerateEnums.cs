@@ -53,7 +53,9 @@ namespace TC.EnumLibrary {
                 for (var i = 0; i < enumValues.Count; i++) {
                     writer.WriteLine("    " + enumValues[i] + (i < enumValues.Count - 1 ? "," : ""));
                 }
-
+            }
+            
+            using (var writer = new StreamWriter(filePath, true)) {
                 writer.WriteLine("}");
             }
 
