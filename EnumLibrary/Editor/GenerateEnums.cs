@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using UnityEditor;
-using UnityEngine;
 
 namespace TC.EnumLibrary {
     public static class GenerateEnums {
